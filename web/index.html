@@ -131,7 +131,13 @@
       text-align: left;
       font: .78rem/1.5 ui-monospace, monospace;
       white-space: pre-wrap;
-      min-height: 100px;
+      min-height: 142px;
+      /* Fix log panel size to prevent layout shift */
+      max-height: 142px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      width: 100%;
+      transition: none;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/roslib@1.4.1/build/roslib.min.js"></script>
@@ -164,6 +170,8 @@
       events.push(`${new Date().toLocaleTimeString()}  ${message}`);
       if (events.length > 6) events.shift();
       activity.textContent = events.join('\n');
+      // always scroll logs to bottom to reveal latest, but do not cause reflow since size is fixed
+      activity.scrollTop = activity.scrollHeight;
     }
     const directions = {
       forward: [1.0, 0],

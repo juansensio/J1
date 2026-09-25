@@ -1,12 +1,13 @@
 ## J1
 
-Evolution of https://github.com/juansensio/J0, a 4-wheeled robot, now adding ROS 2.
+Evolution of [https://github.com/juansensio/J0](https://github.com/juansensio/J0), a 4-wheeled robot, now adding ROS 2.
 
 **Directory Structure**
 
 - **docs/** — Project documentation
 - **firmware/** — ESP32 / MicroPython firmware
 - **ros2_ws/** — ROS 2 Jazzy workspace
+- **web/** — Web client to control the robot
 
 ROS 2 sends commands to the robot via the `/cmd_vel` topic. The robot then drives based on the commands.
 
@@ -52,11 +53,9 @@ movement and terminate the bridge; the ESP32 watchdog should stop the motors
 within 750 ms of its last `/drive` request. The ESP32 request logs show the
 `/drive` and `/stop` calls and watchdog expiry.
 
-## Mando web
+## Web client
 
-Rebuild the Docker image after changing the Dockerfile. Start the HTML web
-server, then start rosbridge and the ROS-to-ESP32 node separately with the wheels
-lifted off the ground:
+After changing the Dockerfile, rebuild the Docker image. Then start the static HTML web server, rosbridge, and the ROS-to-ESP32 node (with the robot's wheels lifted off the ground):
 
 ```bash
 make build
@@ -64,16 +63,15 @@ make client
 make bridge
 ```
 
-`make client` starts only the static web server. `make bridge` builds the ROS
-package, then starts rosbridge and the node that forwards `/cmd_vel` to the ESP32. Both commands
-can be run again without starting duplicate processes. Run `make logs` in a
-second terminal to see `/cmd_vel`, HTTP
-`/drive`, `/stop`, and errors from the bridge.
+- `make client` starts only the static web server.
+- `make bridge` builds the ROS package, then starts rosbridge and the node that forwards `/cmd_vel` to the ESP32.
 
-Open [http://192.168.1.96:8080](http://192.168.1.96:8080) on a phone connected to the same Wi-Fi as the
-Mac. Hold an arrow to publish `/cmd_vel` at 10 Hz; releasing it or pressing
-STOP publishes a zero `Twist`. The page shows WebSocket status and outgoing
-`Twist` messages. The page loads
-roslibjs from jsDelivr, so the phone also needs Internet access. Ports 8080
-and 9090 are intended only for a trusted local network; do not forward them
-to the Internet.
+You can run both commands multiple times without starting duplicate processes.
+
+To view logs for `/cmd_vel`, HTTP `/drive`, `/stop`, and bridge errors, run the following in a second terminal:
+
+```bash
+make logs
+```
+
+Open [http://localhost:8080](http://localhost:8080) on your phone (connected to the same Wi-Fi as your Mac), or use the LAN IP of the machine running the web client. Hold an arrow to publish `/cmd_vel` at 10 Hz; releasing the arrow or pressing STOP sends a zero `Twist`. The page displays WebSocket status and outgoing `Twist` messages. 
