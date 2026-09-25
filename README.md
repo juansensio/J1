@@ -51,3 +51,22 @@ sent on the next 100 ms timer tick after the 500 ms timeout. Then repeat the
 movement and terminate the bridge; the ESP32 watchdog should stop the motors
 within 750 ms of its last `/drive` request. The ESP32 request logs show the
 `/drive` and `/stop` calls and watchdog expiry.
+
+## Mando web
+
+Rebuild the Docker image after changing the Dockerfile, then start rosbridge
+and the static web server with `make build` and `make client`. The `client`
+target can be run again without starting duplicate servers. In a container
+terminal (`make bash`), start the ROS bridge to the ESP32:
+
+```bash
+ros2 run bridge bridge --ros-args -p robot_host:="$ROBOT_HOST" -p robot_token:="$ROBOT_TOKEN"
+```
+
+With the wheels lifted off the ground, open `http://MAC_LAN_IP:8080` on a
+phone connected to the same Wi-Fi as the Mac. Hold an arrow to publish
+`/cmd_vel` at 10 Hz; releasing it or pressing STOP publishes a zero `Twist`.
+The status line shows whether the WebSocket is connected. The page loads
+roslibjs from jsDelivr, so the phone also needs Internet access. Ports 8080
+and 9090 are intended only for a trusted local network; do not forward them
+to the Internet.

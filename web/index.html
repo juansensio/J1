@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>J1 · Mando</title>
+    <style>
+      :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100dvh; display: grid; place-items: center; background: #101827; color: #f8fafc; }
+      main { width: min(100%, 440px); padding: 24px; text-align: center; }
+      h1 { margin: 0 0 8px; font-size: 1.8rem; }
+      #status { margin: 0 0 28px; min-height: 24px; color: #fbbf24; }
+      #status.connected { color: #86efac; }
+      .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; touch-action: none; user-select: none; }
+      button { min-height: 86px; border: 0; border-radius: 18px; background: #334155; color: #fff; font-size: 2.4rem; font-weight: 700; cursor: pointer; touch-action: none; }
+      button:active, button.active { background: #2563eb; }
+      button:disabled { opacity: .4; cursor: not-allowed; }
+      #stop { background: #b91c1c; font-size: 1rem; }
+      #stop:active { background: #ef4444; }
+      .forward { grid-column: 2; }
+      .left { grid-column: 1; grid-row: 2; }
+      #stop { grid-column: 2; grid-row: 2; }
+      .right { grid-column: 3; grid-row: 2; }
+      .back { grid-column: 2; grid-row: 3; }
+      .hint { margin: 26px 0 0; color: #94a3b8; font-size: .9rem; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1.4.1/build/roslib.min.js"></script>
+  </head>
+  <body>
+    <main>
+      <h1>J1 · Mando</h1>
+      <p id="status" role="status">Conectando a ROS…</p>
+      <div class="pad" aria-label="Controles del robot">
+        <button class="forward" data-direction="forward" aria-label="Adelante" disabled>↑</button>
+        <button class="left" data-direction="left" aria-label="Izquierda" disabled>←</button>
+        <button id="stop" aria-label="Parar" disabled>STOP</button>
+        <button class="right" data-direction="right" aria-label="Derecha" disabled>→</button>
+        <button class="back" data-direction="back" aria-label="Atrás" disabled>↓</button>
+      </div>
+      <p class="hint">Mantén pulsada una dirección. Al soltar, se envía STOP.</p>
+    </main>
+    <script>
+      const status = document.querySelector('#status');
+      const buttons = [...document.querySelectorAll('button')];
+      const directions = {
+        forward: [0.5, 0],
+        back: [-0.5, 0],
+        left: [0, 0.5],
+        right: [0, -0.5],
+      };
+      let connected = false;
+      let activePointer = null;
+      let activeButton = null;
+      let repeat = null;
+      let reconnect = null;
+
+      if (typeof ROSLIB === 'undefined') {
+        status.textContent = 'No se pudo cargar roslibjs. Comprueba la conexión a Internet.';
+      } else {
+        const ros = new ROSLIB.Ros();
+        const cmdVel = new ROSLIB.Topic({
+          ros,
+          name: '/cmd_vel',
+          messageType: 'geometry_msgs/Twist',
+        });
+
+        function publish(linear, angular) {
+          if (!connected) return;
+          cmdVel.publish(new ROSLIB.Message({
+            linear: { x: linear, y: 0, z: 0 },
+            angular: { x: 0, y: 0, z: angular },
+          }));
+        }
+
+        function stop() {
+          if (repeat !== null) clearInterval(repeat);
+          repeat = null;
+          if (activeButton) activeButton.classList.remove('active');
+          activeButton = null;
+          activePointer = null;
+          publish(0, 0);
+        }
+
+        function connect() {
+          if (connected) return;
+          const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+          ros.connect(`${protocol}//${location.hostname}:9090`);
+        }
+
+        ros.on('connection', () => {
+          if (reconnect !== null) clearTimeout(reconnect);
+          reconnect = null;
+          connected = true;
+          status.textContent = 'Conectado a rosbridge';
+          status.classList.add('connected');
+          buttons.forEach(button => { button.disabled = false; });
+        });
+        ros.on('error', () => {
+          status.textContent = 'Sin conexión con ROS';
+        });
+        ros.on('close', () => {
+          stop();
+          connected = false;
+          status.textContent = 'Sin conexión con ROS. Reconectando…';
+          status.classList.remove('connected');
+          buttons.forEach(button => { button.disabled = true; });
+          if (reconnect !== null) clearTimeout(reconnect);
+          reconnect = setTimeout(connect, 2000);
+        });
+
+        document.querySelectorAll('[data-direction]').forEach(button => {
+          button.addEventListener('pointerdown', event => {
+            if (!connected || activePointer !== null) return;
+            event.preventDefault();
+            activePointer = event.pointerId;
+            activeButton = button;
+            button.classList.add('active');
+            button.setPointerCapture(event.pointerId);
+            const [linear, angular] = directions[button.dataset.direction];
+            publish(linear, angular);
+            repeat = setInterval(() => publish(linear, angular), 100);
+          });
+          for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+            button.addEventListener(type, event => {
+              if (event.pointerId === activePointer) stop();
+            });
+          }
+        });
+        document.querySelector('#stop').addEventListener('pointerdown', event => {
+          event.preventDefault();
+          stop();
+        });
+        window.addEventListener('blur', stop);
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) stop();
+        });
+        window.addEventListener('pagehide', stop);
+        connect();
+      }
+    </script>
+  </body>
+</html>

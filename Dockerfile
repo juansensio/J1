@@ -5,6 +5,7 @@ WORKDIR /root/ros2_ws
 RUN apt update && apt install -y \
     ros-jazzy-demo-nodes-cpp \
     ros-jazzy-demo-nodes-py \
+    ros-jazzy-rosbridge-server \
     python3-colcon-common-extensions \
     zsh \
     git \
