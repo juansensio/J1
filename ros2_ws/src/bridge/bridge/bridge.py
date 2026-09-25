@@ -39,12 +39,19 @@ class Bridge(Node):
             qos,
         )
         self.create_timer(0.1, self.tick)
+        self.get_logger().info(
+            f"Bridge ready: /cmd_vel -> http://{self.robot_host} "
+            f"(timeout={self.command_timeout:.2f}s)"
+        )
 
     def callback(self, message):
-        self.left, self.right = twist_to_wheels(
+        left, right = twist_to_wheels(
             message.linear.x,
             message.angular.z,
         )
+        if self.stopped or (left, right) != (self.left, self.right):
+            self.get_logger().info(f"/cmd_vel -> left={left} right={right}")
+        self.left, self.right = left, right
         self.last_cmd_time = time.monotonic()
         self.stopped = False
 
@@ -64,6 +71,7 @@ class Bridge(Node):
         try:
             with urlopen(request, timeout=0.25) as response:
                 response.read()
+                self.get_logger().info(f"HTTP {path} -> {response.status}")
         except OSError as exc:
             self.get_logger().warning(f"Robot HTTP request failed: {exc}")
             return

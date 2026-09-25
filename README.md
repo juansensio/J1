@@ -54,19 +54,26 @@ within 750 ms of its last `/drive` request. The ESP32 request logs show the
 
 ## Mando web
 
-Rebuild the Docker image after changing the Dockerfile, then start rosbridge
-and the static web server with `make build` and `make client`. The `client`
-target can be run again without starting duplicate servers. In a container
-terminal (`make bash`), start the ROS bridge to the ESP32:
+Rebuild the Docker image after changing the Dockerfile. Start the HTML web
+server, then start rosbridge and the ROS-to-ESP32 node separately with the wheels
+lifted off the ground:
 
 ```bash
-ros2 run bridge bridge --ros-args -p robot_host:="$ROBOT_HOST" -p robot_token:="$ROBOT_TOKEN"
+make build
+make client
+make bridge
 ```
 
-With the wheels lifted off the ground, open `http://MAC_LAN_IP:8080` on a
-phone connected to the same Wi-Fi as the Mac. Hold an arrow to publish
-`/cmd_vel` at 10 Hz; releasing it or pressing STOP publishes a zero `Twist`.
-The status line shows whether the WebSocket is connected. The page loads
+`make client` starts only the static web server. `make bridge` builds the ROS
+package, then starts rosbridge and the node that forwards `/cmd_vel` to the ESP32. Both commands
+can be run again without starting duplicate processes. Run `make logs` in a
+second terminal to see `/cmd_vel`, HTTP
+`/drive`, `/stop`, and errors from the bridge.
+
+Open [http://192.168.1.96:8080](http://192.168.1.96:8080) on a phone connected to the same Wi-Fi as the
+Mac. Hold an arrow to publish `/cmd_vel` at 10 Hz; releasing it or pressing
+STOP publishes a zero `Twist`. The page shows WebSocket status and outgoing
+`Twist` messages. The page loads
 roslibjs from jsDelivr, so the phone also needs Internet access. Ports 8080
 and 9090 are intended only for a trusted local network; do not forward them
 to the Internet.
