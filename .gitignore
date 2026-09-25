@@ -4,3 +4,4 @@ __pycache__/
 wifi_config.py
 .env
 tools/webrepl/.git/
+.pytest_cache/
