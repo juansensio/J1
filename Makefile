@@ -19,4 +19,4 @@ bash:
 	"
 
 test:
-	docker exec -it ros2-jazzy ros2 run bridge bridge
+	PYTHONPATH=ros2_ws/src/bridge .venv/bin/python -m pytest -q ros2_ws/src/bridge/test/test_kinematics.py
