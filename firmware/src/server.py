@@ -19,7 +19,7 @@ class BadRequest(ValueError):
 
 
 class Server:
-    TICK_MS = 50
+    TICK_MS = 50  # 50ms is the interval at which the watchdog is checked.
 
     def __init__(self, ssid, password, token):
         if not ssid or not token:
@@ -29,6 +29,7 @@ class Server:
         self.token = token
         self.wlan = network.WLAN(network.WLAN.IF_STA)
         self.listener = None
+        self.on_tick = None
         self.routes = []
         self.steps = ()
         self.step_index = 0
@@ -115,7 +116,8 @@ class Server:
             poller.register(listener, select.POLLIN)
             log.info("J1 ready")
             while True:
-                # self._tick()
+                if self.on_tick is not None:
+                    self.on_tick()
                 if not self.wlan.isconnected():
                     raise OSError("Wi-Fi disconnected")
                 if not poller.poll(self.TICK_MS):

@@ -21,7 +21,8 @@ class Motor:
         duty = abs(speed) * 65535 // 100
         log.info(f"Driving motor with speed: {speed}, duty: {duty}")
         # Clear both inputs before changing direction.
-        self.stop()
+        self.in1.duty_u16(0)
+        self.in2.duty_u16(0)
         if speed > 0:
             self.in1.duty_u16(duty)
         elif speed < 0:

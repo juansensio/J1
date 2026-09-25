@@ -56,5 +56,8 @@ test-endpoints:
 test-drive:
 	@sh scripts/test_drive.sh
 
+test-watchdog:
+	@sh scripts/test_watchdog.sh
+
 test:
 	env -u VIRTUAL_ENV uv run python -m pytest tests/

@@ -56,6 +56,7 @@ class EndpointTest(unittest.TestCase):
                 with self.assertRaises(StopMain):
                     runpy.run_path(str(main), run_name="routes_test")
                 self.server = run.call_args.args[0]
+                self.assertEqual(self.server.on_tick, self.drive.check_watchdog)
         self.drive.reset_mock()  # main.py stops the motors when its loop exits.
 
     def request(self, path):

@@ -48,8 +48,10 @@ def move(request, direction):
 - `GET /stop` stops all four motors.
 - `GET /health` returns `OK`.
 
-The motor pin pairs are configured in `main.py`. A drive command remains active until another drive command, `/stop`, or a network error stops it. Send the `X-Robot-Token` header with each request.
+The motor pin pairs are configured in `main.py`. Each `/drive` command renews a 750 ms watchdog; if no new drive command arrives in time, all motors stop. `/stop` and network errors also stop them. Send the `X-Robot-Token` header with each request.
 
-To watch request logs, run `make logs` in one terminal and `make test-enpoints` ot `test-drive`in another. The test script reads `ROBOT_HOST` and `ROBOT_TOKEN` from `.env` or the environment, waits half a second after every request, checks expected HTTP statuses, and sends a final `/stop` when it exits.
+To watch request logs, run `make logs` in one terminal and `make test-endpoints` or `make test-drive` in another. The scripts read `ROBOT_HOST` and `ROBOT_TOKEN` from `.env` or the environment and send `/stop` when they exit.
 
-For a short movement test, run `make test-motion`. It ramps both sides up and down for forward and reverse movement, then ramps into left and right turns before stopping. It also sends `/stop` if a request fails or the script is interrupted.
+For a short movement test, run `make test-drive`. It ramps both sides up and down for forward and reverse movement, then ramps into left and right turns before stopping.
+
+To verify the watchdog itself, run `make test-watchdog` while watching the logs. It sends one `/drive`, waits 1.2 seconds without refreshing it, then checks `/health`. Expect `Drive watchdog expired` before the script's final `/stop` request. Interrupting a movement script sends `/stop` immediately, so that does not exercise the watchdog.

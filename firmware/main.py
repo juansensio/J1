@@ -19,6 +19,7 @@ drive = Drive(LEFT_PINS, RIGHT_PINS)
 server = Server(
     wifi_config.WIFI_SSID, wifi_config.WIFI_PASSWORD, wifi_config.CONTROL_TOKEN
 )
+server.on_tick = drive.check_watchdog
 
 
 @server.get("/drive")

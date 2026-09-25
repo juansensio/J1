@@ -43,7 +43,22 @@ class DriveTest(unittest.TestCase):
                 )
                 drive_module = importlib.util.module_from_spec(drive_spec)
                 drive_spec.loader.exec_module(drive_module)
+                cls.drive_module = drive_module
                 cls.Drive = drive_module.Drive
+
+    def setUp(self):
+        self.now = 0
+        ticks = patch.object(
+            self.drive_module.time, "ticks_ms", side_effect=lambda: self.now, create=True
+        )
+        difference = patch.object(
+            self.drive_module.time, "ticks_diff", side_effect=lambda a, b: a - b,
+            create=True,
+        )
+        ticks.start()
+        difference.start()
+        self.addCleanup(ticks.stop)
+        self.addCleanup(difference.stop)
 
     def test_motor_speed_controls_pwm_direction_and_stop(self):
         motor = self.motor_module.Motor(2, 1)
@@ -71,6 +86,30 @@ class DriveTest(unittest.TestCase):
             drive.drive(50, 101)
         for motor in drive.motors:
             self.assertEqual((motor.in1.duty, motor.in2.duty), (0, 0))
+
+    def test_watchdog_stops_at_750_ms(self):
+        drive = self.Drive(((2, 1),), ((48, 45),))
+        drive.drive(30, -30)
+        self.now = 749
+        drive.check_watchdog()
+        self.assertNotEqual(drive.left_motors[0].in1.duty, 0)
+        self.now = 750
+        drive.check_watchdog()
+        self.assertIsNone(drive.last_drive_ms)
+        for motor in drive.motors:
+            self.assertEqual((motor.in1.duty, motor.in2.duty), (0, 0))
+
+    def test_each_drive_renews_watchdog(self):
+        drive = self.Drive(((2, 1),), ((48, 45),))
+        drive.drive(30, 30)
+        self.now = 500
+        drive.drive(20, 20)
+        self.now = 1249
+        drive.check_watchdog()
+        self.assertNotEqual(drive.left_motors[0].in1.duty, 0)
+        self.now = 1250
+        drive.check_watchdog()
+        self.assertEqual(drive.left_motors[0].in1.duty, 0)
 
 
 if __name__ == "__main__":

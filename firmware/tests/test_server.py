@@ -3,7 +3,11 @@ from pathlib import Path
 import sys
 import types
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+
+
+class StopLoop(Exception):
+    pass
 
 
 class FakeConnection:
@@ -81,6 +85,21 @@ class ServerRoutesTest(unittest.TestCase):
 
         with patch.object(self.module.log, "error"):
             self.assertIn(b"500 Internal Server Error", self.request("/fail"))
+
+    def test_tick_callback_runs_while_no_requests_arrive(self):
+        listener = Mock()
+        poller = Mock()
+        poller.poll.side_effect = [[], StopLoop()]
+        self.server.wlan = Mock()
+        self.server.wlan.isconnected.return_value = True
+        self.server.on_tick = Mock()
+        with patch.object(self.server, "connect"), \
+             patch.object(self.module.socket, "socket", return_value=listener), \
+             patch.object(self.module.select, "poll", return_value=poller):
+            with self.assertRaises(StopLoop):
+                self.server.run()
+        self.assertEqual(self.server.on_tick.call_count, 2)
+        listener.close.assert_called_once_with()
 
 
 if __name__ == "__main__":
