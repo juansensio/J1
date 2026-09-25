@@ -1,8 +1,9 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy
-
 from geometry_msgs.msg import Twist
+
+from bridge.kinematics import twist_to_wheels
 
 
 class Bridge(Node):
@@ -20,8 +21,15 @@ class Bridge(Node):
         )
 
     def callback(self, message):
+        left, right = twist_to_wheels(
+            message.linear.x,
+            message.angular.z,
+        )
+
         self.get_logger().info(
-            f"Raw twist: {message.linear.x:.2f} {message.angular.z:.2f}"
+            f"Twist: v={message.linear.x:.2f} "
+            f"w={message.angular.z:.2f} "
+            f"-> left={left} right={right}"
         )
 
 
