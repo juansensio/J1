@@ -37,3 +37,7 @@ webrepl:
 
 webrepl-cp:
 	uv run tools/webrepl/webrepl_cli.py -p $(WEBREPL_PASSWORD) $(word 2,$(MAKECMDGOALS)) $(ROBOT_HOST):$(word 2,$(MAKECMDGOALS))
+
+restart:
+	@echo "Restarting robot"
+	@curl --fail --show-error --silent --max-time 5 -H "X-Robot-Token: $(ROBOT_TOKEN)" "http://$(ROBOT_HOST)/reset"
