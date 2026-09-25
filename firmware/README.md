@@ -41,3 +41,11 @@ def move(request, direction):
 ```
 
 `/move/forward?seconds=2` passes `forward` as `direction` and makes `seconds` available in `request.args`. Use `<int:name>` for an integer path value. Handlers return plain text. All routes require the existing `X-Robot-Token` header. `/reset` remains a built-in route so its response can be sent before the board restarts.
+
+### Robot control
+
+- `GET /drive?left=X&right=Y` sets the left and right motor speeds independently. Both values are required integers from `-100` to `100`: positive drives the motor's first input, negative drives its second input, and zero stops that side.
+- `GET /stop` stops all four motors.
+- `GET /health` returns `OK`.
+
+The motor pin pairs are configured in `main.py`. A drive command remains active until another drive command, `/stop`, or a network error stops it. Send the `X-Robot-Token` header with each request.

@@ -14,6 +14,10 @@ class Request:
         self.args = args
 
 
+class BadRequest(ValueError):
+    pass
+
+
 class Server:
     TICK_MS = 50
 
@@ -81,6 +85,8 @@ class Server:
     def _run_handler(self, conn, handler, request, params):
         try:
             message = handler(request, **params)
+        except BadRequest as exc:
+            return self._reply(conn, 400, str(exc))
         except Exception as exc:
             log.error("Route failed:", exc)
             return self._reply(conn, 500, "Internal server error")
