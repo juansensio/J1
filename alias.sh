@@ -21,4 +21,5 @@ alias r2tl='ros2 topic list'
 alias r2al='ros2 action list'
 alias r2ai='ros2 action info'
 alias r2asg='ros2 action send_goal'
+alias r2rb='ros2 run bridge bridge --ros-args -p robot_host:="$ROBOT_HOST" -p robot_token:="$ROBOT_TOKEN"'
 EOF

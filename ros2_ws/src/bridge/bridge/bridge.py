@@ -1,3 +1,6 @@
+import time
+from urllib.request import Request, urlopen
+
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy
@@ -9,6 +12,22 @@ from bridge.kinematics import twist_to_wheels
 class Bridge(Node):
     def __init__(self):
         super().__init__("bridge")
+        self.declare_parameter("robot_host", "")
+        self.declare_parameter("robot_token", "")
+        self.declare_parameter("command_timeout", 0.5)
+        self.robot_host = self.get_parameter("robot_host").value
+        self.robot_token = self.get_parameter("robot_token").value
+        self.command_timeout = self.get_parameter("command_timeout").value
+        if not self.robot_host or not self.robot_token:
+            raise ValueError("robot_host and robot_token ROS parameters are required")
+        if self.command_timeout <= 0:
+            raise ValueError("command_timeout must be positive")
+
+        self.left = 0
+        self.right = 0
+        self.last_cmd_time = None
+        self.stopped = True
+
         qos = QoSProfile(
             depth=10,
             reliability=ReliabilityPolicy.RELIABLE,  # if the publisher is not reliable, the subscriber will not receive the messages
@@ -19,18 +38,38 @@ class Bridge(Node):
             self.callback,
             qos,
         )
+        self.create_timer(0.1, self.tick)
 
     def callback(self, message):
-        left, right = twist_to_wheels(
+        self.left, self.right = twist_to_wheels(
             message.linear.x,
             message.angular.z,
         )
+        self.last_cmd_time = time.monotonic()
+        self.stopped = False
 
-        self.get_logger().info(
-            f"Twist: v={message.linear.x:.2f} "
-            f"w={message.angular.z:.2f} "
-            f"-> left={left} right={right}"
+    def tick(self):
+        if self.last_cmd_time is None or self.stopped:
+            return
+
+        if time.monotonic() - self.last_cmd_time < self.command_timeout:
+            path = f"/drive?left={self.left}&right={self.right}"
+        else:
+            path = "/stop"
+
+        request = Request(
+            f"http://{self.robot_host}{path}",
+            headers={"X-Robot-Token": self.robot_token},
         )
+        try:
+            with urlopen(request, timeout=0.25) as response:
+                response.read()
+        except OSError as exc:
+            self.get_logger().warning(f"Robot HTTP request failed: {exc}")
+            return
+
+        if path == "/stop":
+            self.stopped = True
 
 
 def main(args=None):

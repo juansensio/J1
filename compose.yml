@@ -5,6 +5,9 @@ services:
       dockerfile: Dockerfile
     container_name: ros2-jazzy
     hostname: ros2-jazzy
+    environment:
+      ROBOT_HOST: ${ROBOT_HOST}
+      ROBOT_TOKEN: ${ROBOT_TOKEN}
     volumes:
       - ./ros2_ws:/root/ros2_ws
       - ./alias.sh:/root/alias.sh # avoid rebuilding the image when the alias.sh file changes (can remove when alias is complete)

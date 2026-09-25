@@ -19,4 +19,4 @@ bash:
 	"
 
 test:
-	PYTHONPATH=ros2_ws/src/bridge .venv/bin/python -m pytest -q ros2_ws/src/bridge/test/test_kinematics.py
+	PYTHONPATH=ros2_ws/src/bridge .venv/bin/python -m pytest -q ros2_ws/src/bridge/test/test_kinematics.py ros2_ws/src/bridge/test/test_bridge.py
