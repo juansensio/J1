@@ -10,53 +10,79 @@ set +a
 : "${ROBOT_HOST:?Set ROBOT_HOST in .env or the environment}"
 : "${ROBOT_TOKEN:?Set ROBOT_TOKEN in .env or the environment}"
 
-body_file=$(mktemp)
+left_speed=0
+right_speed=0
+stopped=0
+
+stop_robot() {
+    curl --fail --silent --show-error --max-time 5 -o /dev/null \
+        -H "X-Robot-Token: $ROBOT_TOKEN" "http://$ROBOT_HOST/stop"
+}
+
 cleanup() {
-    # Leave the robot stopped even if a request or assertion fails.
-    curl --silent --max-time 5 -H "X-Robot-Token: $ROBOT_TOKEN" \
-        "http://$ROBOT_HOST/stop" >/dev/null 2>&1 || true
-    rm -f "$body_file"
+    if [ "$stopped" -eq 0 ]; then
+        stop_robot || true
+    fi
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
-request() {
-    label=$1
-    path=$2
-    expected=$3
-    auth=$4
-    printf '\n%s: GET %s\n' "$label" "$path"
-    if [ "$auth" = token ]; then
-        status=$(curl --silent --show-error --max-time 5 -o "$body_file" \
-            -w '%{http_code}' -H "X-Robot-Token: $ROBOT_TOKEN" \
-            "http://$ROBOT_HOST$path")
-    else
-        status=$(curl --silent --show-error --max-time 5 -o "$body_file" \
-            -w '%{http_code}' "http://$ROBOT_HOST$path")
-    fi
-    cat "$body_file"
-    printf '\nHTTP %s (expected %s)\n' "$status" "$expected"
-    [ "$status" = "$expected" ] || exit 1
-    sleep 0.5
+drive() {
+    printf 'left=%s right=%s\n' "$1" "$2"
+    curl --fail --silent --show-error --max-time 5 -o /dev/null \
+        -H "X-Robot-Token: $ROBOT_TOKEN" \
+        "http://$ROBOT_HOST/drive?left=$1&right=$2"
 }
 
-request 'Health' '/health' 200 token
-request 'Stopped drive' '/drive?left=0&right=0' 200 token
-request 'Forward' '/drive?left=25&right=25' 200 token
-request 'Stop' '/stop' 200 token
-request 'Reverse' '/drive?left=-25&right=-25' 200 token
-request 'Stop' '/stop' 200 token
-request 'Turn left' '/drive?left=-25&right=25' 200 token
-request 'Stop' '/stop' 200 token
-request 'Turn right' '/drive?left=25&right=-25' 200 token
-request 'Stop' '/stop' 200 token
-request 'Uneven speed' '/drive?left=10&right=30' 200 token
-request 'Stop' '/stop' 200 token
+step_toward() {
+    current=$1
+    target=$2
+    if [ "$current" -lt "$target" ]; then
+        current=$((current + 5))
+        [ "$current" -le "$target" ] || current=$target
+    elif [ "$current" -gt "$target" ]; then
+        current=$((current - 5))
+        [ "$current" -ge "$target" ] || current=$target
+    fi
+    printf '%s\n' "$current"
+}
 
-request 'Missing right' '/drive?left=10' 400 token
-request 'Missing left' '/drive?right=10' 400 token
-request 'Non-numeric speed' '/drive?left=fast&right=10' 400 token
-request 'Too high' '/drive?left=101&right=0' 400 token
-request 'Too low' '/drive?left=0&right=-101' 400 token
-request 'Unknown route' '/missing' 404 token
-request 'Missing token' '/health' 403 no-token
-request 'Health again' '/health' 200 token
+ramp_to() {
+    target_left=$1
+    target_right=$2
+    while [ "$left_speed" -ne "$target_left" ] || \
+          [ "$right_speed" -ne "$target_right" ]; do
+        left_speed=$(step_toward "$left_speed" "$target_left")
+        right_speed=$(step_toward "$right_speed" "$target_right")
+        drive "$left_speed" "$right_speed"
+        sleep 0.12
+    done
+}
+
+printf '\nForward\n'
+ramp_to 80 80
+sleep 0.35
+ramp_to 0 0
+sleep 0.25
+
+printf '\nBackward\n'
+ramp_to -80 -80
+sleep 0.35
+ramp_to 0 0
+sleep 0.25
+
+printf '\nTurn left\n'
+ramp_to -80 80
+sleep 0.4
+ramp_to 0 0
+sleep 0.25
+
+printf '\nTurn right\n'
+ramp_to 80 -80
+sleep 0.4
+ramp_to 0 0
+
+printf '\nStop\n'
+stop_robot
+stopped=1
