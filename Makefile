@@ -17,3 +17,6 @@ bash:
 		source install/setup.zsh && \
 		exec zsh \
 	"
+
+test:
+	docker exec -it ros2-jazzy ros2 run bridge bridge
