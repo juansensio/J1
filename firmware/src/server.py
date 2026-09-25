@@ -148,7 +148,9 @@ class Server:
             if line.split(b":", 1)[0].lower() == b"x-robot-token" and b":" in line
         )
         if not authorized:
+            log.warning("Rejected GET", path)
             return self._reply(conn, 403, "Forbidden")
+        log.info("GET", path)
         if path == "/reset":
             log.info("reset requested")
             self._reply(conn, 200, "Resetting")

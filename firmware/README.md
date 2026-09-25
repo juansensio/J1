@@ -49,3 +49,5 @@ def move(request, direction):
 - `GET /health` returns `OK`.
 
 The motor pin pairs are configured in `main.py`. A drive command remains active until another drive command, `/stop`, or a network error stops it. Send the `X-Robot-Token` header with each request.
+
+To watch request logs, run `make logs` in one terminal and `make test-drive` in another. The test script reads `ROBOT_HOST` and `ROBOT_TOKEN` from `.env` or the environment, waits half a second after every request, checks expected HTTP statuses, and sends a final `/stop` when it exits.

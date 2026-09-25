@@ -47,5 +47,8 @@ LOG_PORT ?= 9999
 logs:
 	uv run scripts/logs.py --port $(LOG_PORT)
 
+test-drive:
+	@sh scripts/test_drive.sh
+
 test:
 	env -u VIRTUAL_ENV uv run python -m pytest tests/

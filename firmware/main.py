@@ -15,13 +15,12 @@ LEFT_PINS = ((2, 1), (41, 42))  # rear left, front left
 RIGHT_PINS = ((48, 45), (21, 47))  # front right, rear right
 drive = Drive(LEFT_PINS, RIGHT_PINS)
 
-# start server that controls the robot
+# add endpoints to the server
 server = Server(
     wifi_config.WIFI_SSID, wifi_config.WIFI_PASSWORD, wifi_config.CONTROL_TOKEN
 )
 
 
-# add endpoints to the server
 @server.get("/drive")
 def drive_route(request):
     try:

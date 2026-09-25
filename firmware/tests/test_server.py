@@ -51,7 +51,9 @@ class ServerRoutesTest(unittest.TestCase):
         def move(request, direction, seconds):
             return "%s %d %s" % (direction, seconds, request.args["speed"])
 
-        response = self.request("/move/forward/2?speed=fast")
+        with patch.object(self.module.log, "info") as info:
+            response = self.request("/move/forward/2?speed=fast")
+        info.assert_called_once_with("GET", "/move/forward/2")
         self.assertIn(b"200 OK", response)
         self.assertTrue(response.endswith(b"forward 2 fast"))
 
