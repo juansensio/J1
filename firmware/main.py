@@ -3,16 +3,18 @@ import time
 from src.server import Server
 from src.logger import configure, get_logger
 
+# configure logger
 host = getattr(wifi_config, "LOG_HOST", None)
 port = getattr(wifi_config, "LOG_PORT", 9999)
 configure(host, port)
 log = get_logger("main")
 
-server = None
+# start server that controls the robot
+server = Server(
+    wifi_config.WIFI_SSID, wifi_config.WIFI_PASSWORD, wifi_config.CONTROL_TOKEN
+)
 try:
-    server = Server(
-        wifi_config.WIFI_SSID, wifi_config.WIFI_PASSWORD, wifi_config.CONTROL_TOKEN
-    )
+    # add enpoints
     while True:
         try:
             server.run()
