@@ -42,6 +42,9 @@ restart:
 	@echo "Restarting robot"
 	@curl --fail --show-error --silent --max-time 5 -H "X-Robot-Token: $(ROBOT_TOKEN)" "http://$(ROBOT_HOST)/reset"
 
+health:
+	@curl --fail --show-error --silent --max-time 5 -H "X-Robot-Token: $(ROBOT_TOKEN)" "http://$(ROBOT_HOST)/health"
+
 LOG_PORT ?= 9999
 
 logs:
