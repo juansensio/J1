@@ -50,7 +50,14 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
       touch-action: none;
+    }
+
+    .pad,
+    .pad * {
       user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     button {
@@ -63,6 +70,7 @@
       font-weight: 700;
       cursor: pointer;
       touch-action: none;
+      -webkit-user-drag: none;
     }
 
     button:active,
@@ -146,7 +154,11 @@
   <script>
     const status = document.querySelector('#status');
     const activity = document.querySelector('#activity');
+    const pad = document.querySelector('.pad');
     const buttons = [...document.querySelectorAll('button')];
+    for (const type of ['contextmenu', 'selectstart', 'dragstart']) {
+      pad.addEventListener(type, event => event.preventDefault());
+    }
     const events = [];
     function log(message) {
       events.push(`${new Date().toLocaleTimeString()}  ${message}`);
