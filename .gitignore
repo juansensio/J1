@@ -5,3 +5,7 @@ wifi_config.py
 .env
 tools/webrepl/.git/
 .pytest_cache/
+bag_files
+build
+install
+log

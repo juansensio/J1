@@ -1,0 +1,11 @@
+services:
+  ros2-jazzy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ros2-jazzy
+    hostname: ros2-jazzy
+    volumes:
+      - ./ros2_ws:/root/ros2_ws
+      - ./alias.sh:/root/alias.sh # avoid rebuilding the image when the alias.sh file changes (can remove when alias is complete)
+    tty: true
