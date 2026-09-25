@@ -50,5 +50,8 @@ logs:
 test-drive:
 	@sh scripts/test_drive.sh
 
+test-motion:
+	@sh scripts/test_motion.sh
+
 test:
 	env -u VIRTUAL_ENV uv run python -m pytest tests/
