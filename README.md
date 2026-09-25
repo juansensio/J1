@@ -75,3 +75,5 @@ make logs
 ```
 
 Open [http://localhost:8080](http://localhost:8080) on your phone (connected to the same Wi-Fi as your Mac), or use the LAN IP of the machine running the web client. Hold an arrow to publish `/cmd_vel` at 10 Hz; releasing the arrow or pressing STOP sends a zero `Twist`. The page displays WebSocket status and outgoing `Twist` messages. 
+
+![Remote control](docs/remote.png)
