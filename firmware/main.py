@@ -13,8 +13,16 @@ log = get_logger("main")
 server = Server(
     wifi_config.WIFI_SSID, wifi_config.WIFI_PASSWORD, wifi_config.CONTROL_TOKEN
 )
+
+
+# add endpoints to the server
+@server.get("/")
+def status(request):
+    return "Robot alive"
+
+
+# control loop
 try:
-    # add enpoints
     while True:
         try:
             server.run()
