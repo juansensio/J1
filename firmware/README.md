@@ -50,6 +50,6 @@ def move(request, direction):
 
 The motor pin pairs are configured in `main.py`. A drive command remains active until another drive command, `/stop`, or a network error stops it. Send the `X-Robot-Token` header with each request.
 
-To watch request logs, run `make logs` in one terminal and `make test-drive` in another. The test script reads `ROBOT_HOST` and `ROBOT_TOKEN` from `.env` or the environment, waits half a second after every request, checks expected HTTP statuses, and sends a final `/stop` when it exits.
+To watch request logs, run `make logs` in one terminal and `make test-enpoints` ot `test-drive`in another. The test script reads `ROBOT_HOST` and `ROBOT_TOKEN` from `.env` or the environment, waits half a second after every request, checks expected HTTP statuses, and sends a final `/stop` when it exits.
 
 For a short movement test, run `make test-motion`. It ramps both sides up and down for forward and reverse movement, then ramps into left and right turns before stopping. It also sends `/stop` if a request fails or the script is interrupted.
